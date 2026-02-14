@@ -1,0 +1,118 @@
+/* Import JetBrains Mono for terminal feel */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.6;
+    font-weight: 400;
+    color-scheme: dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply m-0 bg-space-900 text-gray-200 min-h-screen;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  /* Terminal styling */
+  .terminal {
+    @apply bg-terminal-bg border border-gray-700 rounded-lg font-mono;
+  }
+
+  .terminal-input {
+    @apply bg-transparent border-none outline-none text-terminal-text w-full;
+  }
+
+  /* Glowing text effect */
+  .glow-cyan {
+    text-shadow: 0 0 10px theme('colors.cyber.cyan'), 0 0 20px theme('colors.cyber.cyan');
+  }
+
+  .glow-green {
+    text-shadow: 0 0 10px theme('colors.cyber.green'), 0 0 20px theme('colors.cyber.green');
+  }
+
+  .glow-red {
+    text-shadow: 0 0 10px theme('colors.cyber.red'), 0 0 20px theme('colors.cyber.red');
+  }
+
+  /* HP/Stats bars */
+  .stat-bar {
+    @apply h-4 rounded-full overflow-hidden bg-gray-800;
+  }
+
+  .stat-bar-fill {
+    @apply h-full transition-all duration-300;
+  }
+
+  /* Action buttons */
+  .action-btn {
+    @apply px-4 py-2 bg-space-700 border border-gray-600 rounded-lg
+           hover:border-cyber-cyan hover:bg-space-600 transition-all
+           cursor-pointer text-left w-full;
+  }
+
+  .action-btn:hover {
+    @apply shadow-lg;
+    box-shadow: 0 0 15px theme('colors.cyber.cyan / 30%');
+  }
+
+  /* Typing cursor */
+  .cursor {
+    @apply inline-block w-2 h-5 bg-cyber-cyan ml-1 animate-blink;
+  }
+
+  /* ASCII art container */
+  .ascii-art {
+    @apply font-mono text-xs leading-tight whitespace-pre text-cyber-cyan;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-space-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
+
+/* Scanline effect for retro feel */
+.scanlines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 100;
+}
