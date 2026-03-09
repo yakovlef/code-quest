@@ -72,6 +72,20 @@ export const level1: Level = {
   name: 'Level 1: Hello World',
   description: 'Корабль дрейфует. Энергия на нуле. Система жизнеобеспечения упала с ошибкой.',
   startLocation: 'cryo_pod',
+  completionCondition: { hasFlag: 'power_restored' },
+  author: 'Space Rangers Quest Team',
+  version: '1.0.0',
+  difficulty: 'beginner',
+  tags: ['переменные', 'строки', 'сравнение', 'функции'],
+  order: 1,
+  completionMessage: 'Ты восстановил систему питания корабля "Синтаксис-7".',
+  completionSummary: [
+    'Переменные и присваивание',
+    'Строковые значения и кавычки',
+    'Строгое сравнение (===)',
+    'Конкатенация строк',
+    'Функции и return',
+  ],
   locations: [
     // =====================================
     // LOCATION 1: Cryo Pod

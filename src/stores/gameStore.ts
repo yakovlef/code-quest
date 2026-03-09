@@ -12,11 +12,13 @@ import type {
   Condition,
   InventoryItem,
 } from '../types';
+import { levelRegistry } from '../engine/levelRegistry';
 
 interface GameStore {
   // State
   player: Player;
   currentLevel: Level | null;
+  currentLevelId: string | null;
   locations: Map<string, Location>;
   gameLog: GameLogEntry[];
   terminalState: TerminalState;
@@ -27,6 +29,8 @@ interface GameStore {
 
   // Actions
   initGame: (level: Level) => void;
+  startLevel: (levelId: string) => void;
+  checkLevelCompletion: () => boolean;
   moveToLocation: (locationId: string) => void;
   getCurrentLocation: () => Location | null;
 
@@ -92,6 +96,7 @@ export const useGameStore = create<GameStore>()(
       // Initial state
       player: { ...initialPlayer },
       currentLevel: null,
+      currentLevelId: null,
       locations: new Map(),
       gameLog: [],
       terminalState: { ...initialTerminalState },
@@ -107,9 +112,14 @@ export const useGameStore = create<GameStore>()(
 
         set({
           currentLevel: level,
+          currentLevelId: level.id,
           locations: locationsMap,
           player: {
             ...initialPlayer,
+            hp: level.initialHp ?? initialPlayer.hp,
+            maxHp: level.initialMaxHp ?? initialPlayer.maxHp,
+            focus: level.initialFocus ?? initialPlayer.focus,
+            maxFocus: level.initialMaxFocus ?? initialPlayer.maxFocus,
             currentLocation: level.startLocation,
             checkpoint: level.startLocation,
           },
@@ -119,6 +129,23 @@ export const useGameStore = create<GameStore>()(
           isLevelComplete: false,
           lintMood: 'neutral',
         });
+      },
+
+      // Start level from registry
+      startLevel: (levelId: string) => {
+        const manifest = levelRegistry.get(levelId);
+        if (!manifest) {
+          console.error(`Level ${levelId} not found in registry`);
+          return;
+        }
+        get().initGame(manifest.load());
+      },
+
+      // Check if current level is complete (generic)
+      checkLevelCompletion: () => {
+        const { currentLevel, checkCondition } = get();
+        if (!currentLevel?.completionCondition) return false;
+        return checkCondition(currentLevel.completionCondition);
       },
 
       // Get current location
@@ -504,6 +531,7 @@ export const useGameStore = create<GameStore>()(
         set({
           player: { ...initialPlayer },
           currentLevel: null,
+          currentLevelId: null,
           locations: new Map(),
           gameLog: [],
           terminalState: { ...initialTerminalState },
@@ -519,7 +547,7 @@ export const useGameStore = create<GameStore>()(
       partialize: (state) => ({
         player: state.player,
         gameLog: state.gameLog,
-        // Note: currentLevel and locations are not persisted - they're loaded from JSON
+        currentLevelId: state.currentLevelId,
       }),
     }
   )

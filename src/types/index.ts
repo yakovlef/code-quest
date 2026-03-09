@@ -160,7 +160,37 @@ export interface Level {
   description: string;
   locations: Location[];
   startLocation: string;
+
+  // Plugin system fields
+  completionCondition: Condition;
+  author?: string;
+  version?: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  tags?: string[];
+  order?: number;
+  completionMessage?: string;
+  completionSummary?: string[];
+  nextLevelId?: string;
+  initialHp?: number;
+  initialMaxHp?: number;
+  initialFocus?: number;
+  initialMaxFocus?: number;
 }
+
+export interface LevelManifest {
+  id: string;
+  name: string;
+  description: string;
+  author?: string;
+  version?: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  tags?: string[];
+  order?: number;
+  source: 'builtin' | 'community';
+  load: () => Level;
+}
+
+export type AppScreen = 'menu' | 'game' | 'levelComplete';
 
 export interface GameLogEntry {
   id: string;

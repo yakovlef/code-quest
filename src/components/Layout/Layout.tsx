@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useGameStore } from '../../stores/gameStore';
 
 interface LayoutProps {
   leftPanel: ReactNode;
@@ -6,6 +7,8 @@ interface LayoutProps {
 }
 
 export function Layout({ leftPanel, rightPanel }: LayoutProps) {
+  const currentLevel = useGameStore(state => state.currentLevel);
+
   return (
     <div className="min-h-screen bg-space-900 text-gray-200 flex flex-col">
       {/* Header */}
@@ -36,7 +39,7 @@ export function Layout({ leftPanel, rightPanel }: LayoutProps) {
       <footer className="border-t border-gray-800 bg-space-800 px-6 py-2 text-xs text-gray-500">
         <div className="flex justify-between">
           <span>v0.1.0 // Phase 0</span>
-          <span>Level 1: Hello World</span>
+          <span>{currentLevel?.name ?? 'No level loaded'}</span>
         </div>
       </footer>
     </div>
