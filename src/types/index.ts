@@ -28,7 +28,9 @@ export interface Location {
   id: string;
   name: string;
   description: string;
+  descriptionUpdates?: { condition: Condition; description: string }[];
   asciiArt?: string;
+  asciiArtUpdates?: { condition: Condition; asciiArt: string }[];
   lintComment: string;
   objects?: InteractiveObject[];
   challenge?: Challenge;
@@ -82,6 +84,23 @@ export interface Challenge {
   solutions: Solution[];
   onComplete: Effect[];
   isCompleted?: boolean;
+
+  /** Sandbox mode: execute user code in QuickJS instead of regex matching */
+  sandbox?: SandboxChallenge;
+}
+
+/** Configuration for sandbox-based code execution */
+export interface SandboxChallenge {
+  /** Objects injected as globals into sandbox (e.g. { powerSystem: {} }) */
+  context: Record<string, unknown>;
+  /** JS expression evaluated after user code; must return true */
+  validate: string;
+  /** Timeout in ms (default 3000) */
+  timeout?: number;
+  /** L.I.N.T. reaction on success */
+  successReaction: string;
+  /** L.I.N.T. reaction on validation failure (code ran but result wrong) */
+  failReaction: string;
 }
 
 export interface Solution {
@@ -103,6 +122,7 @@ export interface DangerAction {
   damage: number;
   deathMessage: string;
   lintDeathComment: string;
+  showWhen?: Condition;
 }
 
 // ===========================================

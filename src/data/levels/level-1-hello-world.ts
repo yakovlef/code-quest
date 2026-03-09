@@ -382,34 +382,13 @@ const powerSystem = {};
 // Твой код:`,
         instruction: 'Определи функцию powerSystem.activate, которая возвращает true',
         lintHint: 'Функция должна возвращать true. Это буквально одна строка кода. Если не справишься — я потеряю последнюю надежду на человечество.',
-        solutions: [
-          {
-            pattern: 'powerSystem\\.activate\\s*=\\s*function\\s*\\(\\s*\\)\\s*\\{\\s*return\\s+true\\s*;?\\s*\\}\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Невероятно. Ты действительно справился. Система питания восстановлена. Корабль снова функционирует.',
-          },
-          {
-            pattern: 'powerSystem\\.activate\\s*=\\s*\\(\\s*\\)\\s*=>\\s*(true|\\{\\s*return\\s+true\\s*;?\\s*\\})\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'О, стрелочная функция. Модно. Система питания восстановлена.',
-          },
-          {
-            pattern: 'powerSystem\\.activate\\s*=\\s*true\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Это не функция. Нужно определить ФУНКЦИЮ, которая возвращает true. function() { return true; }',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'powerSystem\\.activate\\s*=\\s*function\\s*\\(\\s*\\)\\s*\\{\\s*\\}\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Пустая функция ничего не возвращает. Нужен return true внутри.',
-            errorType: 'logic',
-          },
-        ],
+        sandbox: {
+          context: { powerSystem: {} },
+          validate: 'typeof powerSystem.activate === "function" && powerSystem.activate() === true',
+          successReaction: 'Невероятно. Ты действительно справился. Система питания восстановлена. Корабль снова функционирует.',
+          failReaction: 'Функция powerSystem.activate должна существовать и возвращать true. Попробуй ещё.',
+        },
+        solutions: [],
         onComplete: [
           { type: 'setFlag', target: 'power_restored', value: true },
           { type: 'lintSay', target: '', value: 'Система питания восстановлена. Уровень пройден!' },

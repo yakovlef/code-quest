@@ -65,6 +65,16 @@ export function QuestPanel() {
     }
   };
 
+  // Resolve dynamic description (last matching override wins)
+  let resolvedDescription = location.description;
+  if (location.descriptionUpdates) {
+    for (const update of location.descriptionUpdates) {
+      if (checkCondition(update.condition)) {
+        resolvedDescription = update.description;
+      }
+    }
+  }
+
   const isChallengeCompleted = location.challenge?.id
     ? hasFlag(`challenge_${location.challenge.id}_completed`)
     : false;
@@ -82,7 +92,7 @@ export function QuestPanel() {
       {/* Description */}
       <div className="flex-1 overflow-y-auto space-y-4">
         <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-          {location.description}
+          {resolvedDescription}
         </p>
 
         {/* L.I.N.T. Dialogue */}
@@ -134,7 +144,7 @@ export function QuestPanel() {
           )}
 
           {/* Danger Action */}
-          {location.dangerAction && (
+          {location.dangerAction && (!location.dangerAction.showWhen || checkCondition(location.dangerAction.showWhen)) && (
             <ActionButton
               index={actionIndex++}
               text={location.dangerAction.text}

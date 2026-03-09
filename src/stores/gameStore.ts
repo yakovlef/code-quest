@@ -47,7 +47,7 @@ interface GameStore {
   openTerminal: (challenge: Challenge) => void;
   closeTerminal: () => void;
   setTerminalInput: (input: string) => void;
-  executeCode: (code: string) => { success: boolean; message: string };
+  executeCode: (code: string) => Promise<{ success: boolean; message: string }>;
 
   // Death & Respawn
   die: (message: string, lintComment: string) => void;
@@ -283,7 +283,7 @@ export const useGameStore = create<GameStore>()(
         }));
       },
 
-      executeCode: (code: string) => {
+      executeCode: async (code: string) => {
         const { terminalState, applyEffects, lintSay, setFlag } = get();
         const challenge = terminalState.currentChallenge;
 
@@ -300,7 +300,92 @@ export const useGameStore = create<GameStore>()(
           },
         }));
 
-        // Check solutions
+        // Helper: mark challenge completed
+        const completeChallenge = (reaction: string) => {
+          set(state => ({
+            terminalState: {
+              ...state.terminalState,
+              output: [
+                ...state.terminalState.output,
+                { type: 'success', content: '✓ Code executed successfully' },
+              ],
+            },
+          }));
+
+          lintSay(reaction, 'impressed');
+          setFlag(`challenge_${challenge.id}_completed`);
+          applyEffects(challenge.onComplete);
+
+          const currentLocation = get().getCurrentLocation();
+          if (currentLocation?.challenge) {
+            const updatedLocation = {
+              ...currentLocation,
+              challenge: { ...currentLocation.challenge, isCompleted: true },
+            };
+            const newLocations = new Map(get().locations);
+            newLocations.set(currentLocation.id, updatedLocation);
+            set({ locations: newLocations });
+          }
+
+          setTimeout(() => get().closeTerminal(), 1500);
+        };
+
+        // === SANDBOX MODE ===
+        if (challenge.sandbox) {
+          const { executeSandboxed } = await import('../engine/sandbox');
+          const result = await executeSandboxed(code, {
+            context: challenge.sandbox.context,
+            validate: challenge.sandbox.validate,
+            timeout: challenge.sandbox.timeout,
+          });
+
+          // Show console.log output
+          if (result.logs.length > 0) {
+            set(state => ({
+              terminalState: {
+                ...state.terminalState,
+                output: [
+                  ...state.terminalState.output,
+                  ...result.logs.map(log => ({ type: 'output' as const, content: log })),
+                ],
+              },
+            }));
+          }
+
+          if (result.error) {
+            set(state => ({
+              terminalState: {
+                ...state.terminalState,
+                output: [
+                  ...state.terminalState.output,
+                  { type: 'error', content: `✗ ${result.error}` },
+                ],
+              },
+            }));
+            lintSay(result.error, 'annoyed');
+            return { success: false, message: result.error };
+          }
+
+          if (result.passed) {
+            completeChallenge(challenge.sandbox.successReaction);
+            return { success: true, message: challenge.sandbox.successReaction };
+          } else {
+            const msg = challenge.sandbox.failReaction;
+            set(state => ({
+              terminalState: {
+                ...state.terminalState,
+                output: [
+                  ...state.terminalState.output,
+                  { type: 'error', content: `✗ ${msg}` },
+                ],
+              },
+            }));
+            lintSay(msg, 'annoyed');
+            return { success: false, message: msg };
+          }
+        }
+
+        // === REGEX MODE (legacy) ===
         for (const solution of challenge.solutions) {
           const matches = solution.isRegex
             ? new RegExp(solution.pattern).test(code)
@@ -308,43 +393,9 @@ export const useGameStore = create<GameStore>()(
 
           if (matches) {
             if (solution.isCorrect) {
-              // Success!
-              set(state => ({
-                terminalState: {
-                  ...state.terminalState,
-                  output: [
-                    ...state.terminalState.output,
-                    { type: 'success', content: '✓ Code executed successfully' },
-                  ],
-                },
-              }));
-
-              lintSay(solution.lintReaction, 'impressed');
-
-              // Mark challenge as completed
-              setFlag(`challenge_${challenge.id}_completed`);
-
-              // Apply completion effects
-              applyEffects(challenge.onComplete);
-
-              // Update location to mark challenge as done
-              const currentLocation = get().getCurrentLocation();
-              if (currentLocation && currentLocation.challenge) {
-                const updatedLocation = {
-                  ...currentLocation,
-                  challenge: { ...currentLocation.challenge, isCompleted: true },
-                };
-                const newLocations = new Map(get().locations);
-                newLocations.set(currentLocation.id, updatedLocation);
-                set({ locations: newLocations });
-              }
-
-              // Close terminal
-              setTimeout(() => get().closeTerminal(), 1500);
-
+              completeChallenge(solution.lintReaction);
               return { success: true, message: solution.lintReaction };
             } else {
-              // Wrong answer
               set(state => ({
                 terminalState: {
                   ...state.terminalState,

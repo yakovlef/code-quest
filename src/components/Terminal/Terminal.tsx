@@ -9,6 +9,7 @@ export function Terminal() {
   } = useGameStore();
 
   const [localInput, setLocalInput] = useState('');
+  const [isExecuting, setIsExecuting] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -22,10 +23,15 @@ export function Terminal() {
     }
   }, [terminalState.output]);
 
-  const handleSubmit = () => {
-    if (!localInput.trim()) return;
+  const handleSubmit = async () => {
+    if (!localInput.trim() || isExecuting) return;
 
-    executeCode(localInput.trim());
+    setIsExecuting(true);
+    try {
+      await executeCode(localInput.trim());
+    } finally {
+      setIsExecuting(false);
+    }
     setLocalInput('');
   };
 
@@ -107,11 +113,11 @@ export function Terminal() {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={!localInput.trim()}
+          disabled={!localInput.trim() || isExecuting}
           className="px-4 py-2 text-sm bg-cyber-green/20 text-cyber-green border border-cyber-green/50
                      hover:bg-cyber-green/30 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Выполнить [Enter]
+          {isExecuting ? 'Выполняется...' : 'Выполнить [Enter]'}
         </button>
       </div>
     </div>

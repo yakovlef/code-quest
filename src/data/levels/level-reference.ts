@@ -49,6 +49,21 @@ const SECURITY_CORRIDOR_ASCII = `
     ║   [!] ЛАЗЕРНАЯ СЕТКА АКТИВНА             ║
     ╚═══════════════════════════════════════════╝`;
 
+const SECURITY_CORRIDOR_UNLOCKED_ASCII = `
+    ╔═══════════════════════════════════════════╗
+    ║       SECURITY CORRIDOR [UNLOCKED]        ║
+    ╠═══════════════════════════════════════════╣
+    ║                                           ║
+    ║   [СЕРВЕРНАЯ] ←────────────────→ [АРХИВ]  ║
+    ║                         │                 ║
+    ║                    ┌────┴────┐            ║
+    ║                    │ ПУЛЬТ   │            ║
+    ║                    │ ▓▓▓▓▓▓  │            ║
+    ║                    └─────────┘            ║
+    ║                                           ║
+    ║   [✓] ЛАЗЕРНАЯ СЕТКА ОТКЛЮЧЕНА           ║
+    ╚═══════════════════════════════════════════╝`;
+
 const DATA_ARCHIVE_ASCII = `
     ╔═══════════════════════════════════════╗
     ║       DATA ARCHIVE [ENCRYPTED]       ║
@@ -59,6 +74,22 @@ const DATA_ARCHIVE_ASCII = `
     ║   │  ║  DATA CORE          ║   │    ║
     ║   │  ║  ████████░░░ 73%    ║   │    ║
     ║   │  ║  STATUS: LOCKED     ║   │    ║
+    ║   │  ╚══════════════════════╝   │    ║
+    ║   └─────────────────────────────┘    ║
+    ║                                       ║
+    ║   [ЯЩИК]    [TERMINAL]   [ШКАФ]     ║
+    ╚═══════════════════════════════════════╝`;
+
+const DATA_ARCHIVE_DECRYPTED_ASCII = `
+    ╔═══════════════════════════════════════╗
+    ║       DATA ARCHIVE [DECRYPTED]       ║
+    ╠═══════════════════════════════════════╣
+    ║                                       ║
+    ║   ┌─────────────────────────────┐    ║
+    ║   │  ╔══════════════════════╗   │    ║
+    ║   │  ║  DATA CORE          ║   │    ║
+    ║   │  ║  ████████████ 100%  ║   │    ║
+    ║   │  ║  STATUS: UNLOCKED   ║   │    ║
     ║   │  ╚══════════════════════╝   │    ║
     ║   └─────────────────────────────┘    ║
     ║                                       ║
@@ -407,11 +438,24 @@ let accessLevel = 3;
       id: 'security_corridor',
       name: 'Коридор безопасности',
       asciiArt: SECURITY_CORRIDOR_ASCII,
+      asciiArtUpdates: [
+        { condition: { hasFlag: 'lasers_disabled' }, asciiArt: SECURITY_CORRIDOR_UNLOCKED_ASCII },
+      ],
       description: `Узкий коридор перегорожен лазерной сеткой. Красные лучи пересекают проход — пройти невозможно.
 
 На стене — пульт управления сеткой. Экран показывает массив частот лазеров.
 
 За сеткой виден вход в архив данных.`,
+      descriptionUpdates: [
+        {
+          condition: { hasFlag: 'lasers_disabled' },
+          description: `Коридор безопасности. Лазерная сетка отключена — путь свободен.
+
+На стене — пульт управления сеткой. Экран показывает: "СИСТЕМА ОТКЛЮЧЕНА".
+
+Впереди — вход в архив данных.`,
+        },
+      ],
       lintComment: 'Лазерная сетка. Классика. Не советую проверять на себе — это не инфракрасные датчики из кино.',
       isCheckpoint: true,
       // DEMO: isDangerous + dangerAction
@@ -423,6 +467,7 @@ let accessLevel = 3;
         deathMessage: 'Лазерная сетка разрезала тебя на аккуратные кубики. Система безопасности работает исправно.',
         // DEMO: L.I.N.T. mood "angry"
         lintDeathComment: 'Я БУКВАЛЬНО сказал не лезть. Ладно, git revert... Какой же ты баг в моей жизни.',
+        showWhen: { notHasFlag: 'lasers_disabled' },
       },
       challenge: {
         id: 'laser_grid',
@@ -496,11 +541,24 @@ let safePaths;
       id: 'data_archive',
       name: 'Архив данных',
       asciiArt: DATA_ARCHIVE_ASCII,
+      asciiArtUpdates: [
+        { condition: { hasFlag: 'archive_challenge_done' }, asciiArt: DATA_ARCHIVE_DECRYPTED_ASCII },
+      ],
       description: `Архив данных. В центре — ядро хранения данных, окружённое защитным полем.
 
 На экране: "STATUS: LOCKED — ТРЕБУЕТСЯ КЛЮЧ РАСШИФРОВКИ".
 
 В углу стоит ящик с инструментами. На стене — шкаф с оборудованием.`,
+      descriptionUpdates: [
+        {
+          condition: { hasFlag: 'archive_challenge_done' },
+          description: `Архив данных. Ядро хранения данных расшифровано — защитное поле снято.
+
+На экране: "STATUS: UNLOCKED — ДАННЫЕ ДОСТУПНЫ".
+
+В углу стоит ящик с инструментами. На стене — шкаф с оборудованием.`,
+        },
+      ],
       lintComment: 'Вот оно — ядро данных. Зашифровано. Нужен ключ расшифровки. Осмотрись.',
       isCheckpoint: true,
       // DEMO: onEnter with conditional lintSay

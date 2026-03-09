@@ -62,6 +62,7 @@ const DangerActionSchema = z.object({
   damage: z.number(),
   deathMessage: z.string(),
   lintDeathComment: z.string(),
+  showWhen: ConditionSchema.optional(),
 });
 
 const ObjectActionSchema = z.object({
@@ -91,11 +92,25 @@ const ExitSchema = z.object({
   lockedMessage: z.string().optional(),
 });
 
+const ConditionOverrideSchema = z.object({
+  condition: ConditionSchema,
+});
+
+const DescriptionUpdateSchema = ConditionOverrideSchema.extend({
+  description: z.string(),
+});
+
+const AsciiArtUpdateSchema = ConditionOverrideSchema.extend({
+  asciiArt: z.string(),
+});
+
 const LocationSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
+  descriptionUpdates: z.array(DescriptionUpdateSchema).optional(),
   asciiArt: z.string().optional(),
+  asciiArtUpdates: z.array(AsciiArtUpdateSchema).optional(),
   lintComment: z.string(),
   objects: z.array(InteractiveObjectSchema).optional(),
   challenge: ChallengeSchema.optional(),

@@ -22,9 +22,10 @@ function App() {
     return currentLevelId && currentLevel ? 'game' : 'menu';
   });
 
-  // Load community levels from localStorage on mount
+  // Load community levels and preload QuickJS WASM on mount
   useEffect(() => {
     loadCommunityLevelsFromStorage();
+    import('./engine/sandbox').then(m => m.preloadQuickJS());
   }, []);
 
   // Restore saved game if level exists in registry
