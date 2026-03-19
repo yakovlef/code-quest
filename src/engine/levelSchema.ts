@@ -37,13 +37,19 @@ const ConditionSchema = z.object({
   challengeCompleted: z.string().optional(),
 });
 
-const SolutionSchema = z.object({
-  pattern: z.string(),
-  isRegex: z.boolean(),
-  isCorrect: z.boolean(),
-  lintReaction: z.string(),
+const SandboxHintSchema = z.object({
+  check: z.string(),
+  message: z.string(),
   effects: z.array(EffectSchema).optional(),
-  errorType: z.enum(['syntax', 'logic', 'runtime']).optional(),
+});
+
+const SandboxChallengeSchema = z.object({
+  context: z.record(z.string(), z.unknown()),
+  validate: z.string(),
+  timeout: z.number().optional(),
+  successReaction: z.string(),
+  failReaction: z.string(),
+  hints: z.array(SandboxHintSchema).optional(),
 });
 
 const ChallengeSchema = z.object({
@@ -51,7 +57,7 @@ const ChallengeSchema = z.object({
   setup: z.string(),
   instruction: z.string(),
   lintHint: z.string(),
-  solutions: z.array(SolutionSchema).min(1),
+  sandbox: SandboxChallengeSchema,
   onComplete: z.array(EffectSchema),
   isCompleted: z.boolean().optional(),
 });
@@ -212,24 +218,6 @@ export function validateLevel(data: unknown): ValidationResult {
         errors.push(
           `Локация "${loc.id}": эффект teleport ведёт в несуществующую локацию "${effect.target}"`
         );
-      }
-    }
-  }
-
-  // Step 3: Regex validation
-  for (const loc of level.locations) {
-    if (loc.challenge) {
-      for (let i = 0; i < loc.challenge.solutions.length; i++) {
-        const solution = loc.challenge.solutions[i];
-        if (solution.isRegex) {
-          try {
-            new RegExp(solution.pattern);
-          } catch {
-            errors.push(
-              `Локация "${loc.id}", задача "${loc.challenge.id}", решение #${i + 1}: невалидный regex "${solution.pattern}"`
-            );
-          }
-        }
       }
     }
   }

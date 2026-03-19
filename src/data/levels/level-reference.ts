@@ -125,7 +125,7 @@ const COMMAND_CENTER_ASCII = `
 // - DangerAction (death)
 // - onEnter effects
 // - Challenges: regex + exact match
-// - Multiple solutions (correct + incorrect)
+// - Sandbox challenges with hints
 // - All 5 L.I.N.T. moods
 // - Items with effects
 // - Custom initialHp/initialFocus
@@ -224,7 +224,7 @@ export const levelReference: Level = {
           ],
         },
       ],
-      // DEMO: challenge with regex + multiple correct/incorrect solutions
+      // DEMO: sandbox challenge with hints
       challenge: {
         id: 'airlock_code',
         setup: `// [AIRLOCK CONTROL] Код разгерметизации
@@ -239,36 +239,22 @@ let accessCode;
 // Твой код:`,
         instruction: 'Присвой переменной accessCode элемент массива codes с индексом 3',
         lintHint: 'Массивы индексируются с нуля. Элемент с индексом 3 — это четвёртый элемент. Не перепутай.',
-        solutions: [
-          {
-            pattern: 'accessCode\\s*=\\s*codes\\[3\\]\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            // DEMO: L.I.N.T. mood "impressed"
-            lintReaction: 'Верно. codes[3] === 99. Шлюз открывается.',
-          },
-          {
-            pattern: 'accessCode\\s*=\\s*99\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Хардкод? Нет. Используй индексацию массива: codes[3].',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'accessCode\\s*=\\s*codes\\[4\\]\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'codes[4] — это 42, а не 99. Индексация с нуля: 0→12, 1→42, 2→7, 3→99.',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'accessCode\\s*=\\s*codes\\(3\\)\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Круглые скобки — это вызов функции. Для доступа к элементу массива используй квадратные скобки: codes[3].',
-            errorType: 'syntax',
-          },
-        ],
+        sandbox: {
+          context: { codes: [12, 42, 7, 99, 42, 15], accessCode: undefined },
+          validate: 'accessCode === 99 && __source.includes("codes[")',
+          successReaction: 'Верно. codes[3] === 99. Шлюз открывается.',
+          failReaction: 'Нужно присвоить accessCode элемент массива codes с индексом 3.',
+          hints: [
+            {
+              check: 'accessCode === 99 && !__source.includes("codes[")',
+              message: 'Хардкод? Нет. Используй индексацию массива: codes[3].',
+            },
+            {
+              check: 'accessCode === 42',
+              message: 'codes[4] — это 42, а не 99. Индексация с нуля: 0→12, 1→42, 2→7, 3→99.',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'airlock_opened', value: true },
           { type: 'showMessage', target: '', value: 'Код принят. Внутренний люк разгерметизирован.' },
@@ -378,35 +364,22 @@ let accessLevel = 3;
 // Твой код:`,
         instruction: 'Используй if с условием: serverStatus === "active" && accessLevel >= 3',
         lintHint: 'Два условия. Логическое И. Если оба верны — ставишь isSecure = true. Это базовый if.',
-        solutions: [
-          {
-            pattern: 'if\\s*\\(\\s*serverStatus\\s*===?\\s*["\']active["\']\\s*&&\\s*accessLevel\\s*>=\\s*3\\s*\\)\\s*\\{?\\s*isSecure\\s*=\\s*true;?\\s*\\}?',
-            isRegex: true,
-            isCorrect: true,
-            // DEMO: L.I.N.T. mood "neutral"
-            lintReaction: 'Условие выполнено. Сервер предоставляет доступ.',
-          },
-          {
-            pattern: 'if\\s*\\(\\s*accessLevel\\s*>=\\s*3\\s*&&\\s*serverStatus\\s*===?\\s*["\']active["\']\\s*\\)\\s*\\{?\\s*isSecure\\s*=\\s*true;?\\s*\\}?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Порядок условий другой, но работает. Доступ получен.',
-          },
-          {
-            pattern: 'isSecure\\s*=\\s*true\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Нужна ПРОВЕРКА условий через if, а не просто присваивание. Без проверки это дыра в безопасности.',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'if\\s*\\(\\s*serverStatus\\s*===?\\s*["\']active["\']\\s*\\|\\|\\s*accessLevel\\s*>=\\s*3\\s*\\)',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Ты используешь ИЛИ (||) вместо И (&&). Нужно чтобы ОБА условия были истинны.',
-            errorType: 'logic',
-          },
-        ],
+        sandbox: {
+          context: { serverStatus: 'active', isSecure: false, accessLevel: 3 },
+          validate: 'isSecure === true && __source.includes("if")',
+          successReaction: 'Условие выполнено. Сервер предоставляет доступ.',
+          failReaction: 'Нужен if с проверкой serverStatus и accessLevel.',
+          hints: [
+            {
+              check: 'isSecure === true && !__source.includes("if")',
+              message: 'Нужна ПРОВЕРКА условий через if, а не просто присваивание. Без проверки это дыра в безопасности.',
+            },
+            {
+              check: '__source.includes("||") && !__source.includes("&&")',
+              message: 'Ты используешь ИЛИ (||) вместо И (&&). Нужно чтобы ОБА условия были истинны.',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'server_accessed' },
           { type: 'showMessage', target: '', value: 'Доступ к серверу получен! Путь к архиву данных открыт.' },
@@ -483,36 +456,22 @@ let safePaths;
 // Твой код:`,
         instruction: 'Используй метод .filter() для фильтрации массива frequencies — оставь только значения < 100',
         lintHint: 'Array.filter(). Передай callback, который возвращает true для элементов меньше 100. Элементарно.',
-        solutions: [
-          {
-            pattern: 'safePaths\\s*=\\s*frequencies\\.filter\\(\\s*(?:function\\s*\\(\\s*\\w+\\s*\\)\\s*\\{\\s*return\\s+\\w+\\s*<\\s*100\\s*;?\\s*\\}|\\(?\\s*\\w+\\s*\\)?\\s*=>\\s*\\w+\\s*<\\s*100)\\s*\\)\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Лазеры отключены. Путь свободен. [80, 90, 60] — три безопасных коридора.',
-          },
-          {
-            // DEMO: exact match solution
-            pattern: 'safePaths = frequencies.filter(f => f < 100)',
-            isRegex: false,
-            isCorrect: true,
-            // DEMO: L.I.N.T. mood "sarcastic"
-            lintReaction: 'Кратко и по делу. Стрелочные функции — выбор профессионалов. Или лентяев. Впрочем, это одно и то же.',
-          },
-          {
-            pattern: 'safePaths\\s*=\\s*frequencies\\.filter\\(\\s*\\(?\\s*\\w+\\s*\\)?\\s*=>\\s*\\w+\\s*>\\s*100\\s*\\)\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Ты отфильтровал частоты ВЫШЕ 100. Нужно наоборот — НИЖЕ 100. Поменяй знак.',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'safePaths\\s*=\\s*frequencies\\.map\\(',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'map() преобразует элементы, а не фильтрует. Тебе нужен filter().',
-            errorType: 'logic',
-          },
-        ],
+        sandbox: {
+          context: { frequencies: [120, 450, 80, 300, 90, 510, 60, 200], safePaths: undefined },
+          validate: 'JSON.stringify(safePaths) === JSON.stringify([80, 90, 60])',
+          successReaction: 'Лазеры отключены. Путь свободен. [80, 90, 60] — три безопасных коридора.',
+          failReaction: 'Нужно отфильтровать частоты ниже 100 через .filter().',
+          hints: [
+            {
+              check: 'JSON.stringify(safePaths) === JSON.stringify([120, 450, 300, 510, 200])',
+              message: 'Ты отфильтровал частоты ВЫШЕ 100. Нужно наоборот — НИЖЕ 100. Поменяй знак.',
+            },
+            {
+              check: '__source.includes(".map(")',
+              message: 'map() преобразует элементы, а не фильтрует. Тебе нужен filter().',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'lasers_disabled' },
           { type: 'showMessage', target: '', value: 'Лазерная сетка отключена! Путь в архив данных свободен.' },
@@ -671,41 +630,29 @@ let decryptedPacket;
 // Твой код:`,
         instruction: 'Создай копию объекта dataPacket через spread-оператор и измени encrypted на false',
         lintHint: 'Spread-оператор {...obj} копирует свойства. Потом переопределяешь нужное. Не мутируй оригинал.',
-        solutions: [
-          {
-            pattern: 'decryptedPacket\\s*=\\s*\\{\\s*\\.\\.\\.dataPacket\\s*,\\s*encrypted\\s*:\\s*false\\s*\\}\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Идеально. Spread + override. Иммутабельность — признак зрелого разработчика.',
+        sandbox: {
+          context: {
+            dataPacket: { id: 'OBL-7742', type: 'classified', encrypted: true, size: 2048 },
+            decryptedPacket: undefined,
           },
-          {
-            pattern: 'decryptedPacket\\s*=\\s*Object\\.assign\\(\\s*\\{\\}\\s*,\\s*dataPacket\\s*,\\s*\\{\\s*encrypted\\s*:\\s*false\\s*\\}\\s*\\)\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Object.assign? Олдскул, но работает. Данные расшифрованы.',
-          },
-          {
-            pattern: 'Object\\.assign\\(\\s*dataPacket',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Object.assign(dataPacket, ...) мутирует оригинал! Первым аргументом должен быть пустой объект: Object.assign({}, dataPacket, {encrypted: false}).',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'dataPacket\\.encrypted\\s*=\\s*false\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Ты мутировал оригинальный объект! Нужно создать НОВЫЙ объект decryptedPacket.',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'decryptedPacket\\s*=\\s*dataPacket\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Это не копия — это ссылка на тот же объект. Используй spread: {...dataPacket, encrypted: false}.',
-            errorType: 'logic',
-          },
-        ],
+          validate: 'decryptedPacket && decryptedPacket.encrypted === false && decryptedPacket.id === "OBL-7742" && dataPacket.encrypted === true',
+          successReaction: 'Идеально. Spread + override. Иммутабельность — признак зрелого разработчика.',
+          failReaction: 'Создай копию dataPacket через spread-оператор и измени encrypted на false.',
+          hints: [
+            {
+              check: 'dataPacket.encrypted === false',
+              message: 'Ты мутировал оригинальный объект! Нужно создать НОВЫЙ объект decryptedPacket.',
+            },
+            {
+              check: 'decryptedPacket !== undefined && decryptedPacket === dataPacket',
+              message: 'Это не копия — это ссылка на тот же объект. Используй spread: {...dataPacket, encrypted: false}.',
+            },
+            {
+              check: '__source.includes("Object.assign(dataPacket")',
+              message: 'Object.assign(dataPacket, ...) мутирует оригинал! Первым аргументом должен быть пустой объект: Object.assign({}, dataPacket, {encrypted: false}).',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'archive_challenge_done' },
           // DEMO: completeChallenge effect
@@ -791,40 +738,25 @@ let transmit;
 // Твой код:`,
         instruction: 'Проверь что данные не зашифрованы и файлы есть, затем установи transmit = true',
         lintHint: 'Два условия через &&. Проверяешь encrypted и длину массива. Последний шаг. Сосредоточься.',
-        solutions: [
-          {
-            pattern: 'if\\s*\\(\\s*usbData\\.encrypted\\s*===\\s*false\\s*&&\\s*usbData\\.files\\.length\\s*>\\s*0\\s*\\)\\s*\\{?\\s*transmit\\s*=\\s*true;?\\s*\\}?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Передача завершена. Данные на корабле. Миссия выполнена. Даже я впечатлён.',
+        sandbox: {
+          context: {
+            usbData: { files: ['plans.dat', 'codes.dat', 'map.dat'], encrypted: false, target: 'ship' },
+            transmit: undefined,
           },
-          {
-            pattern: 'if\\s*\\(\\s*!usbData\\.encrypted\\s*&&\\s*usbData\\.files\\.length\\s*>\\s*0\\s*\\)\\s*\\{?\\s*transmit\\s*=\\s*true;?\\s*\\}?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: '!encrypted — элегантно. Данные переданы. Мы сделали это.',
-          },
-          {
-            pattern: 'if\\s*\\(\\s*usbData\\.files\\.length\\s*>\\s*0\\s*&&\\s*usbData\\.encrypted\\s*===\\s*false\\s*\\)\\s*\\{?\\s*transmit\\s*=\\s*true;?\\s*\\}?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Порядок другой, но логика верна. Данные переданы на корабль.',
-          },
-          {
-            pattern: 'transmit\\s*=\\s*true\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Без проверки? Что если данные зашифрованы или файлов нет? Нужен if с условиями.',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'if\\s*\\(\\s*usbData\\.encrypted\\s*===\\s*true',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Ты проверяешь что данные ЗАШИФРОВАНЫ. Нужно наоборот — encrypted === false.',
-            errorType: 'logic',
-          },
-        ],
+          validate: 'transmit === true && __source.includes("if")',
+          successReaction: 'Передача завершена. Данные на корабле. Миссия выполнена. Даже я впечатлён.',
+          failReaction: 'Проверь что данные не зашифрованы и файлы есть, затем установи transmit = true.',
+          hints: [
+            {
+              check: 'transmit === true && !__source.includes("if")',
+              message: 'Без проверки? Что если данные зашифрованы или файлов нет? Нужен if с условиями.',
+            },
+            {
+              check: '__source.includes("encrypted === true") || __source.includes("encrypted !== false")',
+              message: 'Ты проверяешь что данные ЗАШИФРОВАНЫ. Нужно наоборот — encrypted === false.',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'data_extracted', value: true },
           { type: 'lintSay', target: '', value: 'МИССИЯ ВЫПОЛНЕНА. Все данные переданы. Уходим, пока не поздно.' },

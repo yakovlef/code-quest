@@ -331,107 +331,79 @@ export const useGameStore = create<GameStore>()(
         };
 
         // === SANDBOX MODE ===
-        if (challenge.sandbox) {
-          const { executeSandboxed } = await import('../engine/sandbox');
-          const result = await executeSandboxed(code, {
-            context: challenge.sandbox.context,
-            validate: challenge.sandbox.validate,
-            timeout: challenge.sandbox.timeout,
-          });
+        const { executeSandboxed } = await import('../engine/sandbox');
+        const sandbox = challenge.sandbox;
+        const result = await executeSandboxed(code, {
+          context: sandbox.context,
+          validate: sandbox.validate,
+          timeout: sandbox.timeout,
+          hints: sandbox.hints?.map(h => ({ check: h.check })),
+        });
 
-          // Show console.log output
-          if (result.logs.length > 0) {
-            set(state => ({
-              terminalState: {
-                ...state.terminalState,
-                output: [
-                  ...state.terminalState.output,
-                  ...result.logs.map(log => ({ type: 'output' as const, content: log })),
-                ],
-              },
-            }));
-          }
-
-          if (result.error) {
-            set(state => ({
-              terminalState: {
-                ...state.terminalState,
-                output: [
-                  ...state.terminalState.output,
-                  { type: 'error', content: `✗ ${result.error}` },
-                ],
-              },
-            }));
-            lintSay(result.error, 'annoyed');
-            return { success: false, message: result.error };
-          }
-
-          if (result.passed) {
-            completeChallenge(challenge.sandbox.successReaction);
-            return { success: true, message: challenge.sandbox.successReaction };
-          } else {
-            const msg = challenge.sandbox.failReaction;
-            set(state => ({
-              terminalState: {
-                ...state.terminalState,
-                output: [
-                  ...state.terminalState.output,
-                  { type: 'error', content: `✗ ${msg}` },
-                ],
-              },
-            }));
-            lintSay(msg, 'annoyed');
-            return { success: false, message: msg };
-          }
+        // Show console.log output
+        if (result.logs.length > 0) {
+          set(state => ({
+            terminalState: {
+              ...state.terminalState,
+              output: [
+                ...state.terminalState.output,
+                ...result.logs.map(log => ({ type: 'output' as const, content: log })),
+              ],
+            },
+          }));
         }
 
-        // === REGEX MODE (legacy) ===
-        for (const solution of challenge.solutions) {
-          const matches = solution.isRegex
-            ? new RegExp(solution.pattern).test(code)
-            : code.trim() === solution.pattern.trim();
-
-          if (matches) {
-            if (solution.isCorrect) {
-              completeChallenge(solution.lintReaction);
-              return { success: true, message: solution.lintReaction };
-            } else {
-              set(state => ({
-                terminalState: {
-                  ...state.terminalState,
-                  output: [
-                    ...state.terminalState.output,
-                    { type: 'error', content: `✗ ${solution.errorType || 'Error'}: ${solution.lintReaction}` },
-                  ],
-                },
-              }));
-
-              lintSay(solution.lintReaction, 'annoyed');
-
-              if (solution.effects) {
-                applyEffects(solution.effects);
-              }
-
-              return { success: false, message: solution.lintReaction };
-            }
-          }
+        if (result.error) {
+          set(state => ({
+            terminalState: {
+              ...state.terminalState,
+              output: [
+                ...state.terminalState.output,
+                { type: 'error', content: `✗ ${result.error}` },
+              ],
+            },
+          }));
+          lintSay(result.error, 'annoyed');
+          return { success: false, message: result.error };
         }
 
-        // No matching solution - generic error
-        const genericError = 'Синтаксическая ошибка. Попробуй ещё раз.';
+        if (result.passed) {
+          completeChallenge(sandbox.successReaction);
+          return { success: true, message: sandbox.successReaction };
+        }
+
+        // Check if a hint matched
+        if (result.matchedHintIndex !== undefined && sandbox.hints) {
+          const hint = sandbox.hints[result.matchedHintIndex];
+          set(state => ({
+            terminalState: {
+              ...state.terminalState,
+              output: [
+                ...state.terminalState.output,
+                { type: 'error', content: `✗ ${hint.message}` },
+              ],
+            },
+          }));
+          lintSay(hint.message, 'annoyed');
+          if (hint.effects) {
+            applyEffects(hint.effects);
+          }
+          return { success: false, message: hint.message };
+        }
+
+        // Generic fail
+        const msg = sandbox.failReaction;
         set(state => ({
           terminalState: {
             ...state.terminalState,
             output: [
               ...state.terminalState.output,
-              { type: 'error', content: `✗ ${genericError}` },
+              { type: 'error', content: `✗ ${msg}` },
             ],
           },
         }));
-
-        lintSay('Это даже не похоже на код. Ты уверен, что умеешь программировать?', 'annoyed');
-
-        return { success: false, message: genericError };
+        lintSay(msg, 'annoyed');
+        return { success: false, message: msg };
       },
 
       // Death & Respawn

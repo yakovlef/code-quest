@@ -114,35 +114,22 @@ let lockStatus;
 // Твой код:`,
         instruction: 'Присвой переменной lockStatus значение "open"',
         lintHint: 'Смотри сюда. Замок ожидает строковое значение статуса. Не перепутай кавычки, джуниор.',
-        solutions: [
-          {
-            pattern: 'lockStatus\\s*=\\s*["\']open["\']\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Надо же, скомпилировалось с первого раза. Наверное, повезло.',
-          },
-          {
-            pattern: 'lockStatus\\s*=\\s*open\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'ReferenceError: open is not defined. Ты пытаешься присвоить переменную, которой не существует. Кавычки для кого придумали? RTFM!',
-            errorType: 'runtime',
-          },
-          {
-            pattern: 'lockStatus\\s*=\\s*["\']close["\']\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Серьёзно? Ты хочешь остаться здесь навечно? Значение должно быть "open", а не "close".',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'lockStatus\\s*=\\s*["\']Open["\']\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'JavaScript чувствителен к регистру. "Open" !== "open". Попробуй ещё раз с маленькой буквы.',
-            errorType: 'logic',
-          },
-        ],
+        sandbox: {
+          context: { lockStatus: undefined },
+          validate: 'lockStatus === "open"',
+          successReaction: 'Надо же, скомпилировалось с первого раза. Наверное, повезло.',
+          failReaction: 'Замок ожидает значение "open". Попробуй ещё раз.',
+          hints: [
+            {
+              check: 'typeof lockStatus === "string" && (lockStatus === "close" || lockStatus === "closed")',
+              message: 'Серьёзно? Ты хочешь остаться здесь навечно? Значение должно быть "open", а не "close".',
+            },
+            {
+              check: 'typeof lockStatus === "string" && (lockStatus === "Open" || lockStatus === "OPEN")',
+              message: 'JavaScript чувствителен к регистру. "Open" !== "open". Попробуй ещё раз с маленькой буквы.',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'cryo_unlocked', value: true },
           { type: 'showMessage', target: '', value: 'Замок щёлкает. Крышка капсулы открывается.' },
@@ -227,34 +214,22 @@ let accessGranted;
 // Твой код:`,
         instruction: 'Используй строгое сравнение (===) для проверки userId',
         lintHint: 'Дверь старая. Она проверяет тип данных. Если введёшь число как строку — останешься здесь.',
-        solutions: [
-          {
-            pattern: 'accessGranted\\s*=\\s*\\(?\\s*userId\\s*===\\s*1337\\s*\\)?\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Правильно. Строгое сравнение — признак хорошего тона. Хотя для тебя это, наверное, случайность.',
-          },
-          {
-            pattern: 'if\\s*\\(\\s*userId\\s*===\\s*1337\\s*\\)\\s*(\\{\\s*)?accessGranted\\s*=\\s*true\\s*;?(\\s*\\})?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Работает. Хотя можно было короче. Но ладно, зачёт.',
-          },
-          {
-            pattern: 'accessGranted\\s*=\\s*\\(?\\s*userId\\s*==\\s*1337\\s*\\)?\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Нет-нет-нет. == — это нестрогое сравнение. Оно может привести к неожиданным результатам. Используй ===!',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'accessGranted\\s*=\\s*true\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Хардкод? Серьёзно? Нужно ПРОВЕРИТЬ userId, а не просто присвоить true.',
-            errorType: 'logic',
-          },
-        ],
+        sandbox: {
+          context: { userId: 1337, accessGranted: undefined },
+          validate: 'accessGranted === true && __source.includes("===")',
+          successReaction: 'Правильно. Строгое сравнение — признак хорошего тона. Хотя для тебя это, наверное, случайность.',
+          failReaction: 'Нужно проверить userId через строгое сравнение (===) и присвоить результат в accessGranted.',
+          hints: [
+            {
+              check: 'accessGranted === true && __source.includes("==") && !__source.includes("===")',
+              message: 'Нет-нет-нет. == — это нестрогое сравнение. Оно может привести к неожиданным результатам. Используй ===!',
+            },
+            {
+              check: 'accessGranted === true && !__source.includes("userId")',
+              message: 'Хардкод? Серьёзно? Нужно ПРОВЕРИТЬ userId, а не просто присвоить true.',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'cabin_door_unlocked', value: true },
           { type: 'showMessage', target: '', value: 'Дверь разблокирована. Доступ в коридор открыт.' },
@@ -309,28 +284,22 @@ let result;
 // Твой код:`,
         instruction: 'Используй конкатенацию строк (+) для соединения circuitA и circuitB',
         lintHint: 'Конкатенация строк. Первый класс программирования. Надеюсь, ты это осилишь.',
-        solutions: [
-          {
-            pattern: 'result\\s*=\\s*circuitA\\s*\\+\\s*circuitB\\s*;?',
-            isRegex: true,
-            isCorrect: true,
-            lintReaction: 'Питание восстановлено. Искры прекратились. Иногда ты меня удивляешь... в хорошем смысле.',
-          },
-          {
-            pattern: 'result\\s*=\\s*["\']PowerOn["\']\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Хардкод строки? Нет. Нужно СОЕДИНИТЬ переменные circuitA и circuitB.',
-            errorType: 'logic',
-          },
-          {
-            pattern: 'result\\s*=\\s*circuitA\\s*\\+\\s*["\']\\s*["\']\\s*\\+\\s*circuitB\\s*;?',
-            isRegex: true,
-            isCorrect: false,
-            lintReaction: 'Зачем пробел? Нужно "PowerOn", а не "Power On". Убери лишнее.',
-            errorType: 'logic',
-          },
-        ],
+        sandbox: {
+          context: { circuitA: 'Power', circuitB: 'On', result: undefined },
+          validate: 'result === "PowerOn" && __source.includes("circuitA")',
+          successReaction: 'Питание восстановлено. Искры прекратились. Иногда ты меня удивляешь... в хорошем смысле.',
+          failReaction: 'Нужно соединить circuitA и circuitB через оператор +.',
+          hints: [
+            {
+              check: 'result === "PowerOn" && !__source.includes("circuitA")',
+              message: 'Хардкод строки? Нет. Нужно СОЕДИНИТЬ переменные circuitA и circuitB.',
+            },
+            {
+              check: 'result === "Power On"',
+              message: 'Зачем пробел? Нужно "PowerOn", а не "Power On". Убери лишнее.',
+            },
+          ],
+        },
         onComplete: [
           { type: 'setFlag', target: 'corridor_powered', value: true },
           { type: 'showMessage', target: '', value: 'Свет загорается. Искры прекращаются. Путь в машинное отделение открыт!' },
@@ -388,7 +357,6 @@ const powerSystem = {};
           successReaction: 'Невероятно. Ты действительно справился. Система питания восстановлена. Корабль снова функционирует.',
           failReaction: 'Функция powerSystem.activate должна существовать и возвращать true. Попробуй ещё.',
         },
-        solutions: [],
         onComplete: [
           { type: 'setFlag', target: 'power_restored', value: true },
           { type: 'lintSay', target: '', value: 'Система питания восстановлена. Уровень пройден!' },

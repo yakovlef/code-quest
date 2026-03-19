@@ -29,6 +29,8 @@ export function Terminal() {
     setIsExecuting(true);
     try {
       await executeCode(localInput.trim());
+    } catch (err) {
+      console.error('executeCode error:', err);
     } finally {
       setIsExecuting(false);
     }

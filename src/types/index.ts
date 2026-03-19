@@ -81,12 +81,9 @@ export interface Challenge {
   setup: string;           // Initial code shown
   instruction: string;     // What player needs to do
   lintHint: string;        // L.I.N.T.'s sarcastic hint
-  solutions: Solution[];
+  sandbox: SandboxChallenge;
   onComplete: Effect[];
   isCompleted?: boolean;
-
-  /** Sandbox mode: execute user code in QuickJS instead of regex matching */
-  sandbox?: SandboxChallenge;
 }
 
 /** Configuration for sandbox-based code execution */
@@ -101,15 +98,17 @@ export interface SandboxChallenge {
   successReaction: string;
   /** L.I.N.T. reaction on validation failure (code ran but result wrong) */
   failReaction: string;
+  /** Recognized wrong-answer patterns with specific feedback */
+  hints?: SandboxHint[];
 }
 
-export interface Solution {
-  pattern: string;         // Regex pattern or exact match
-  isRegex: boolean;
-  isCorrect: boolean;
-  lintReaction: string;
+export interface SandboxHint {
+  /** JS expression evaluated in sandbox after user code; true = hint matched */
+  check: string;
+  /** Feedback message shown to the player */
+  message: string;
+  /** Optional effects to apply (e.g. HP/Focus penalties) */
   effects?: Effect[];
-  errorType?: 'syntax' | 'logic' | 'runtime';
 }
 
 // ===========================================

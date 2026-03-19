@@ -8,6 +8,8 @@ export interface SandboxConfig {
   validate: string;
   /** Timeout in milliseconds (default: 3000) */
   timeout?: number;
+  /** Hint checks to evaluate if validation fails */
+  hints?: { check: string }[];
 }
 
 export interface SandboxResult {
@@ -18,6 +20,8 @@ export interface SandboxResult {
   logs: string[];
   /** Error message if code threw */
   error?: string;
+  /** Index of the first matched hint, if any */
+  matchedHintIndex?: number;
 }
 
 /**
@@ -116,6 +120,11 @@ export async function executeSandboxed(
       handle.dispose();
     }
 
+    // Inject __source (user code as string) for source-level checks
+    const sourceHandle = ctx.newString(userCode);
+    ctx.setProp(ctx.global, '__source', sourceHandle);
+    sourceHandle.dispose();
+
     // Execute user code
     const codeResult = ctx.evalCode(userCode);
     if (codeResult.error) {
@@ -135,6 +144,22 @@ export async function executeSandboxed(
 
     const passed = ctx.dump(validateResult.value) === true;
     validateResult.value.dispose();
+
+    // If validation failed, check hints in the same context
+    if (!passed && config.hints) {
+      for (let i = 0; i < config.hints.length; i++) {
+        const hintResult = ctx.evalCode(config.hints[i].check);
+        if (hintResult.error) {
+          hintResult.error.dispose();
+          continue;
+        }
+        const matched = ctx.dump(hintResult.value) === true;
+        hintResult.value.dispose();
+        if (matched) {
+          return { success: true, passed: false, logs, matchedHintIndex: i };
+        }
+      }
+    }
 
     return { success: true, passed, logs };
   } catch (e) {
